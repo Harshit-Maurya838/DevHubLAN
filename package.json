@@ -1,0 +1,22 @@
+{
+  "name": "devhub-lan",
+  "version": "1.0.0",
+  "description": "Peer-to-Peer Collaboration",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Harshit-Maurya838/DevHubLAN.git"
+  },
+  "author": "Harshit and Nikhil",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Harshit-Maurya838/DevHubLAN/issues"
+  },
+  "homepage": "https://github.com/Harshit-Maurya838/DevHubLAN#readme",
+  "devDependencies": {
+    "electron": "^35.1.5"
+  }
+}
