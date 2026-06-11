@@ -9,6 +9,9 @@ import { EventEmitter } from 'events';
 import { PORT_TCP } from '../../shared/constants';
 import { v4 as uuidv4 } from 'uuid';
 
+import { cryptoManager } from '../security/cryptoManager';
+import { identityManager } from '../security/identityManager';
+
 export class RoomCoordinator extends EventEmitter {
   constructor() {
     super();
@@ -55,14 +58,14 @@ export class RoomCoordinator extends EventEmitter {
       });
 
       // Send Room Key to the new member securely via KEY_ROTATION packet
-      const { cryptoManager } = require('../security/cryptoManager');
       let roomKey = cryptoManager.getRoomKey(room.id);
       if (!roomKey) {
         roomKey = cryptoManager.generateSessionKey();
         cryptoManager.setRoomKey(room.id, roomKey);
       }
       
-      const { identityManager } = require('../security/identityManager');
+      if (!peer || !peer.publicKey) return;
+
       const encryptedKey = cryptoManager.encryptRSA(roomKey, peer.publicKey); // Assumes we saved their publicKey in peerManager during UDP
       const keyPacket = {
         type: 'KEY_ROTATION' as const,
@@ -105,7 +108,6 @@ export class RoomCoordinator extends EventEmitter {
 
   private broadcastToMembers(room: Room, packet: AnyPacket & { messageId: string }, excludePeerIds: string[] = []) {
     const myUsername = settingsManager.getIdentity().username;
-    const { cryptoManager } = require('../security/cryptoManager');
     
     for (const member of room.members) {
       if (member.peerId === myUsername || excludePeerIds.includes(member.peerId)) continue;

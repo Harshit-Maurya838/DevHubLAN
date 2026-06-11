@@ -1,6 +1,10 @@
 import { tcpClient } from './tcpClient';
 import { EventEmitter } from 'events';
 
+import { cryptoManager } from '../security/cryptoManager';
+import { handshakeManager } from '../security/handshakeManager';
+import { peerManager } from '../discovery/peerManager';
+
 export class ReliableSender extends EventEmitter {
   private pendingAcks: Map<string, { timer: NodeJS.Timeout, retries: number }> = new Map();
 
@@ -11,9 +15,6 @@ export class ReliableSender extends EventEmitter {
   public async sendWithRetry(ip: string, port: number, packet: any, maxRetries = 3): Promise<void> {
     const attempt = async (retriesLeft: number) => {
       try {
-        const { cryptoManager } = require('../security/cryptoManager');
-        const { handshakeManager } = require('../security/handshakeManager');
-        const { peerManager } = require('../discovery/peerManager');
 
         // We need to know who we are sending to for the session key.
         // Assuming packet has a recipient peerId, or we can look it up by IP.

@@ -17,6 +17,11 @@ import { PORT_TCP } from '../shared/constants';
 import { Room, RoomMember, RoomMessage } from '../shared/roomTypes';
 import os from 'os';
 
+import { identityManager } from './security/identityManager';
+import { cryptoManager } from './security/cryptoManager';
+import { trustManager } from './security/trustManager';
+import { securityLogManager } from './security/securityLogManager';
+
 let mainWindow: BrowserWindow | null = null;
 
 function getLocalIp(): string {
@@ -56,7 +61,6 @@ app.whenReady().then(async () => {
   createWindow();
 
   // Initialize Security Identity First
-  const { identityManager } = require('./security/identityManager');
   await identityManager.initialize();
 
   // Initialize Election (it registers its own events)
@@ -167,7 +171,6 @@ ipcMain.handle('create-room', async (_, name: string, description: string) => {
   roomManager.addOrUpdateRoom(newRoom);
 
   // Generate AES Room Key immediately
-  const { cryptoManager } = require('./security/cryptoManager');
   const roomKey = cryptoManager.generateSessionKey();
   cryptoManager.setRoomKey(newRoom.id, roomKey);
 
@@ -229,9 +232,6 @@ ipcMain.handle('send-room-message', async (_, roomId: string, content: string) =
 
 // Phase 3 IPC Handlers
 ipcMain.handle('get-security-dashboard-data', () => {
-  const { identityManager } = require('./security/identityManager');
-  const { trustManager } = require('./security/trustManager');
-  const { securityLogManager } = require('./security/securityLogManager');
 
   return {
     publicKey: identityManager.getPublicKey(),
@@ -242,7 +242,6 @@ ipcMain.handle('get-security-dashboard-data', () => {
 });
 
 ipcMain.handle('set-trust-status', (_, fingerprint: string, status: string) => {
-  const { trustManager } = require('./security/trustManager');
   trustManager.setTrustStatus(fingerprint, status as any);
   return trustManager.getAllDevices();
 });

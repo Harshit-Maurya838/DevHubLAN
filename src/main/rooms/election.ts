@@ -3,6 +3,8 @@ import { roomManager } from './roomManager';
 import { settingsManager } from '../storage/settings';
 import { Peer } from '../../shared/types';
 
+import { roomCoordinator } from './roomCoordinator';
+
 export class ElectionManager {
   constructor() {
     peerManager.on('peer-updated', this.handlePeerUpdate.bind(this));
@@ -54,7 +56,6 @@ export class ElectionManager {
           // Any other online member will see my ROOM_ADVERTISEMENT or ROOM_STATE_SYNC and accept it.
           // Since we use require dynamically in udpBroadcaster to avoid circular dependency,
           // the regular broadcast loop will pick this up. Let's also do a manual state sync.
-          const { roomCoordinator } = require('./roomCoordinator');
           roomCoordinator.broadcastStateSync(room);
         }
       }

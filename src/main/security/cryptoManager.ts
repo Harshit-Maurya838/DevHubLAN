@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { EncryptedPayload, SessionKey } from '../../shared/cryptoTypes';
+import { settingsManager } from '../storage/settings';
 import { identityManager } from './identityManager';
 
 export class CryptoManager {
@@ -119,7 +120,6 @@ export class CryptoManager {
     const payloadStr = JSON.stringify(encryptedPayload);
     const signature = identityManager.sign(Buffer.from(payloadStr));
 
-    const { settingsManager } = require('../storage/settings');
     const myIdentity = settingsManager.getIdentity();
 
     return {
@@ -149,10 +149,8 @@ export class CryptoManager {
     
     // Sign the encrypted payload
     const payloadStr = JSON.stringify(encryptedPayload);
-    const { identityManager } = require('./identityManager');
     const signature = identityManager.sign(Buffer.from(payloadStr));
 
-    const { settingsManager } = require('../storage/settings');
     const myIdentity = settingsManager.getIdentity();
 
     return {

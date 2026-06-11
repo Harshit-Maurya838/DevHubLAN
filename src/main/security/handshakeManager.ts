@@ -7,6 +7,7 @@ import { securityLogManager } from './securityLogManager';
 import { PORT_TCP } from '../../shared/constants';
 import { settingsManager } from '../storage/settings';
 import { EventEmitter } from 'events';
+import { reliableSender } from '../networking/reliableSender';
 import { 
   HandshakeHelloPacket, 
   HandshakeChallengePacket, 
@@ -138,7 +139,6 @@ export class HandshakeManager extends EventEmitter {
   private flushQueue(peerId: string) {
     const messages = this.getQueuedMessages(peerId);
     for (const msg of messages) {
-      const { reliableSender } = require('../networking/reliableSender');
       reliableSender.sendWithRetry(msg.ip, msg.port, msg.packet, msg.maxRetries);
     }
   }

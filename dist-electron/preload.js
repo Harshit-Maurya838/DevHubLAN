@@ -12,6 +12,9 @@ const api = {
   createRoom: (name, description) => electron.ipcRenderer.invoke("create-room", name, description),
   joinRoom: (roomId, ownerIp) => electron.ipcRenderer.invoke("join-room", roomId, ownerIp),
   sendRoomMessage: (roomId, content) => electron.ipcRenderer.invoke("send-room-message", roomId, content),
+  // Phase 3: Security APIs
+  getSecurityDashboardData: () => electron.ipcRenderer.invoke("get-security-dashboard-data"),
+  setTrustStatus: (fingerprint, status) => electron.ipcRenderer.invoke("set-trust-status", fingerprint, status),
   // Existing Listeners
   onPeerAdded: (callback) => electron.ipcRenderer.on("peer-added", (_, peer) => callback(peer)),
   onPeerUpdated: (callback) => electron.ipcRenderer.on("peer-updated", (_, peer) => callback(peer)),

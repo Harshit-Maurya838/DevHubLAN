@@ -5,6 +5,9 @@ import { settingsManager } from '../storage/settings';
 import { KeyRotationPacket } from '../../shared/securityPackets';
 import { identityManager } from './identityManager';
 import { PORT_TCP } from '../../shared/constants';
+import { v4 as uuidv4 } from 'uuid';
+
+import { tcpClient } from '../networking/tcpClient';
 
 export class KeyRotationSystem extends EventEmitter {
   // 30 minutes for sessions, 24 hours for rooms
@@ -28,7 +31,7 @@ export class KeyRotationSystem extends EventEmitter {
     const encryptedKey = cryptoManager.encryptRSA(newSessionKey, peer.publicKey!);
     const packet: KeyRotationPacket & { messageId: string } = {
       type: 'KEY_ROTATION',
-      messageId: require('uuid').v4(),
+      messageId: uuidv4(),
       peerId: settingsManager.getIdentity().username,
       encryptedKey,
       timestamp: Date.now(),
@@ -39,7 +42,6 @@ export class KeyRotationSystem extends EventEmitter {
     packet.signature = identityManager.sign(Buffer.from(sigStr));
 
     // Send directly over TCP without secureWrap because we are changing the key
-    const { tcpClient } = require('../networking/tcpClient');
     await tcpClient.sendMessage(peer.ip, PORT_TCP, packet);
   }
 

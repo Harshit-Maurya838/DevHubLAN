@@ -2,6 +2,9 @@ import dgram from 'dgram';
 import { PORT_UDP, PORT_TCP, DISCOVERY_INTERVAL_MS } from '../../shared/constants';
 import { settingsManager } from '../storage/settings';
 
+import { identityManager } from '../security/identityManager';
+import { roomManager } from '../rooms/roomManager';
+
 export class UdpBroadcaster {
   private socket: dgram.Socket;
   private interval: NodeJS.Timeout | null = null;
@@ -25,7 +28,6 @@ export class UdpBroadcaster {
 
   private broadcast() {
     const identity = settingsManager.getIdentity();
-    const { identityManager } = require('../security/identityManager');
 
     const basePacket = {
       type: 'DISCOVER',
@@ -49,7 +51,6 @@ export class UdpBroadcaster {
 
     // Also broadcast any rooms where this peer is the owner
     // Since roomManager is new, import it
-    const { roomManager } = require('../rooms/roomManager');
     const rooms = roomManager.getRooms();
     
     for (const room of rooms) {

@@ -4,6 +4,10 @@ import { peerManager } from './peerManager';
 
 import { EventEmitter } from 'events';
 
+import { identityManager } from '../security/identityManager';
+import { trustManager } from '../security/trustManager';
+import { securityLogManager } from '../security/securityLogManager';
+
 export class UdpListener extends EventEmitter {
   private socket: dgram.Socket;
 
@@ -16,9 +20,6 @@ export class UdpListener extends EventEmitter {
     this.socket.on('message', (msg, rinfo) => {
       try {
         const packet = JSON.parse(msg.toString());
-        const { identityManager } = require('../security/identityManager');
-        const { trustManager } = require('../security/trustManager');
-        const { securityLogManager } = require('../security/securityLogManager');
 
         if (!packet.publicKey || !packet.signature) return;
 
