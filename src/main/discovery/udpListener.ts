@@ -1,21 +1,25 @@
 import dgram from 'dgram';
 import { PORT_UDP } from '../../shared/constants';
 import { peerManager } from './peerManager';
-import { DiscoveryPacket } from '../../shared/types';
 
-export class UdpListener {
+import { EventEmitter } from 'events';
+
+export class UdpListener extends EventEmitter {
   private socket: dgram.Socket;
 
   constructor() {
+    super();
     this.socket = dgram.createSocket('udp4');
   }
 
   public start() {
     this.socket.on('message', (msg, rinfo) => {
       try {
-        const packet: DiscoveryPacket = JSON.parse(msg.toString());
+        const packet = JSON.parse(msg.toString());
         if (packet.type === 'DISCOVER') {
           peerManager.handleDiscovery(packet, rinfo);
+        } else if (packet.type === 'ROOM_ADVERTISEMENT') {
+          this.emit('room-advertised', packet);
         }
       } catch (e) {
         // Ignore invalid packets

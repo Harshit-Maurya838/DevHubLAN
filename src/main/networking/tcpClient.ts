@@ -1,8 +1,7 @@
 import net from 'net';
-import { ChatMessage } from '../../shared/types';
 
 export class TcpClient {
-  public static async sendMessage(ip: string, port: number, message: ChatMessage): Promise<void> {
+  public async sendMessage(ip: string, port: number, message: any): Promise<void> {
     return new Promise((resolve, reject) => {
       const client = new net.Socket();
 
@@ -19,3 +18,5 @@ export class TcpClient {
     });
   }
 }
+
+export const tcpClient = new TcpClient();

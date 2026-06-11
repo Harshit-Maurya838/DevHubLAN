@@ -1,7 +1,6 @@
 import net from 'net';
 import { PORT_TCP } from '../../shared/constants';
 import { messageHandler } from './messageHandler';
-import { ChatMessage } from '../../shared/types';
 
 export class TcpServer {
   private server: net.Server;
@@ -19,10 +18,8 @@ export class TcpServer {
           const packetStr = buffer.substring(0, boundary);
           buffer = buffer.substring(boundary + 1);
           try {
-            const msg: ChatMessage = JSON.parse(packetStr);
-            if (msg.type === 'CHAT') {
-              messageHandler.handleIncomingMessage(msg);
-            }
+            const msg = JSON.parse(packetStr);
+            messageHandler.handleIncomingMessage(msg, socket.remoteAddress || '');
           } catch (e) {
             console.error('Invalid TCP packet', packetStr);
           }

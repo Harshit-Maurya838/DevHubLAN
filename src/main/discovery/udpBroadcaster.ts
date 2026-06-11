@@ -35,8 +35,30 @@ export class UdpBroadcaster {
       timestamp: Date.now()
     };
 
+    this.sendPacket(packet);
+
+    // Also broadcast any rooms where this peer is the owner
+    // Since roomManager is new, import it
+    const { roomManager } = require('../rooms/roomManager');
+    const rooms = roomManager.getRooms();
+    
+    for (const room of rooms) {
+      if (room.ownerId === identity.username) {
+        const roomPacket = {
+          type: 'ROOM_ADVERTISEMENT',
+          roomId: room.id,
+          roomName: room.name,
+          owner: room.ownerId,
+          memberCount: room.members.length,
+          timestamp: Date.now()
+        };
+        this.sendPacket(roomPacket);
+      }
+    }
+  }
+
+  private sendPacket(packet: any) {
     const message = Buffer.from(JSON.stringify(packet));
-    // Broadcast to the whole network 255.255.255.255
     this.socket.send(message, 0, message.length, PORT_UDP, '255.255.255.255', (err) => {
       if (err) {
         console.error('Broadcast error:', err);
