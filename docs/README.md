@@ -4,8 +4,8 @@ Welcome to the DevHub LAN engineering documentation. This directory serves as a 
 
 ## 🗺️ Roadmap
 - [Phase 1: Core LAN](roadmap/phase-01-core-lan.md)
-- [Phase 2: Rooms & Collaboration](roadmap/phase-02-rooms.md)
-- [Phase 3: Security & Trust](roadmap/phase-03-security.md)
+- [Phase 2: Rooms & Collaboration](roadmap/phase-02-rooms-collaboration.md)
+- [Phase 3: Security & Trust](roadmap/phase-03-security-trust.md)
 - [Phase 4: File Transfer](roadmap/phase-04-file-transfer.md)
 - [Phase 5: Code Collaboration](roadmap/phase-05-code-collaboration.md)
 - [Phase 6: Voice](roadmap/phase-06-voice.md)
@@ -22,6 +22,10 @@ Welcome to the DevHub LAN engineering documentation. This directory serves as a 
 - [Leader Election](lld/leader-election.md)
 - [Reliable Delivery](lld/reliable-delivery.md)
 - [Security Architecture](lld/security-architecture.md)
+- [Trust Management](lld/trust-management.md)
+- [Room Encryption](lld/room-encryption.md)
+- [Room Architecture](lld/room-architecture.md)
+- [Handshake Protocol](lld/handshake-architecture.md)
 
 ## 📊 Diagrams
 - [System Architecture](diagrams/architecture.md)
