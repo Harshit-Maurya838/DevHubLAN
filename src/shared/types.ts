@@ -14,6 +14,7 @@ export interface Peer {
   tcpPort: number;
   status: 'Online' | 'Offline' | 'Connecting' | 'Disconnected';
   lastSeen: number;
+  publicKey?: string;
 }
 
 export interface ChatMessage {

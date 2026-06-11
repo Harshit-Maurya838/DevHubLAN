@@ -4,7 +4,6 @@ import { udpBroadcaster } from './discovery/udpBroadcaster';
 import { udpListener } from './discovery/udpListener';
 import { peerManager } from './discovery/peerManager';
 import { tcpServer } from './networking/tcpServer';
-import { TcpClient } from './networking/tcpClient';
 import { reliableSender } from './networking/reliableSender';
 import { messageHandler } from './networking/messageHandler';
 import { settingsManager } from './storage/settings';
@@ -53,8 +52,12 @@ function createWindow() {
   }
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   createWindow();
+
+  // Initialize Security Identity First
+  const { identityManager } = require('./security/identityManager');
+  await identityManager.initialize();
 
   // Initialize Election (it registers its own events)
   electionManager; // Just accessing it initializes the singleton listener
@@ -134,9 +137,8 @@ ipcMain.handle('send-message', async (_, ip: string, content: string) => {
   };
 
   const packet = { ...msg }; 
-  // We can use direct tcpClient for basic CHAT since it doesn't need reliable ACK logic if we want to keep Phase 1 simple
-  // But let's use the standard tcpClient.
-  await new TcpClient().sendMessage(ip, peer.tcpPort || PORT_TCP, packet);
+  
+  await reliableSender.sendWithRetry(ip, peer.tcpPort || PORT_TCP, packet);
   return msg;
 });
 
@@ -163,6 +165,12 @@ ipcMain.handle('create-room', async (_, name: string, description: string) => {
   };
 
   roomManager.addOrUpdateRoom(newRoom);
+
+  // Generate AES Room Key immediately
+  const { cryptoManager } = require('./security/cryptoManager');
+  const roomKey = cryptoManager.generateSessionKey();
+  cryptoManager.setRoomKey(newRoom.id, roomKey);
+
   return newRoom;
 });
 
@@ -217,4 +225,24 @@ ipcMain.handle('send-room-message', async (_, roomId: string, content: string) =
     msg.status = 'Sent';
     return msg;
   }
+});
+
+// Phase 3 IPC Handlers
+ipcMain.handle('get-security-dashboard-data', () => {
+  const { identityManager } = require('./security/identityManager');
+  const { trustManager } = require('./security/trustManager');
+  const { securityLogManager } = require('./security/securityLogManager');
+
+  return {
+    publicKey: identityManager.getPublicKey(),
+    fingerprint: identityManager.fingerprint,
+    trustedDevices: trustManager.getAllDevices(),
+    logs: securityLogManager.getLogs()
+  };
+});
+
+ipcMain.handle('set-trust-status', (_, fingerprint: string, status: string) => {
+  const { trustManager } = require('./security/trustManager');
+  trustManager.setTrustStatus(fingerprint, status as any);
+  return trustManager.getAllDevices();
 });

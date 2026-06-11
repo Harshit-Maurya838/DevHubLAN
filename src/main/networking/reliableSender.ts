@@ -1,4 +1,3 @@
-import { AnyPacket } from '../../shared/roomPackets';
 import { tcpClient } from './tcpClient';
 import { EventEmitter } from 'events';
 
@@ -9,10 +8,28 @@ export class ReliableSender extends EventEmitter {
     super();
   }
 
-  public async sendWithRetry(ip: string, port: number, packet: AnyPacket & { messageId: string }, maxRetries = 3): Promise<void> {
+  public async sendWithRetry(ip: string, port: number, packet: any, maxRetries = 3): Promise<void> {
     const attempt = async (retriesLeft: number) => {
       try {
-        await tcpClient.sendMessage(ip, port, packet);
+        const { cryptoManager } = require('../security/cryptoManager');
+        const { handshakeManager } = require('../security/handshakeManager');
+        const { peerManager } = require('../discovery/peerManager');
+
+        // We need to know who we are sending to for the session key.
+        // Assuming packet has a recipient peerId, or we can look it up by IP.
+        const peer = peerManager.getPeer(ip);
+        if (!peer) throw new Error('Cannot send reliable message, peer unknown');
+
+        if (!cryptoManager.hasActiveSession(peer.username)) {
+          console.log('No active session for', peer.username, 'Initiating handshake...');
+          handshakeManager.queueMessage(peer.username, { ip, port, packet, maxRetries });
+          await handshakeManager.initiateHandshake(ip, peer.username);
+          return; // The queue will handle sending it once established
+        }
+
+        const securePacket = cryptoManager.secureWrap(packet, peer.username);
+
+        await tcpClient.sendMessage(ip, port, securePacket);
         
         return new Promise<void>((resolve, reject) => {
           const timer = setTimeout(() => {

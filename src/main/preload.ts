@@ -16,6 +16,10 @@ export const api = {
   joinRoom: (roomId: string, ownerIp: string) => ipcRenderer.invoke('join-room', roomId, ownerIp),
   sendRoomMessage: (roomId: string, content: string) => ipcRenderer.invoke('send-room-message', roomId, content),
 
+  // Phase 3: Security APIs
+  getSecurityDashboardData: () => ipcRenderer.invoke('get-security-dashboard-data'),
+  setTrustStatus: (fingerprint: string, status: string) => ipcRenderer.invoke('set-trust-status', fingerprint, status),
+
   // Existing Listeners
   onPeerAdded: (callback: (peer: Peer) => void) => ipcRenderer.on('peer-added', (_, peer) => callback(peer)),
   onPeerUpdated: (callback: (peer: Peer) => void) => ipcRenderer.on('peer-updated', (_, peer) => callback(peer)),

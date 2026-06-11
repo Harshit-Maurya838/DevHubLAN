@@ -53,6 +53,30 @@ export class RoomCoordinator extends EventEmitter {
         accepted: true,
         room: room
       });
+
+      // Send Room Key to the new member securely via KEY_ROTATION packet
+      const { cryptoManager } = require('../security/cryptoManager');
+      let roomKey = cryptoManager.getRoomKey(room.id);
+      if (!roomKey) {
+        roomKey = cryptoManager.generateSessionKey();
+        cryptoManager.setRoomKey(room.id, roomKey);
+      }
+      
+      const { identityManager } = require('../security/identityManager');
+      const encryptedKey = cryptoManager.encryptRSA(roomKey, peer.publicKey); // Assumes we saved their publicKey in peerManager during UDP
+      const keyPacket = {
+        type: 'KEY_ROTATION' as const,
+        messageId: uuidv4(),
+        peerId: settingsManager.getIdentity().username,
+        roomId: room.id,
+        encryptedKey,
+        timestamp: Date.now(),
+        signature: ''
+      };
+      const sigStr = `${keyPacket.type}${keyPacket.peerId}${keyPacket.timestamp}`;
+      keyPacket.signature = identityManager.sign(Buffer.from(sigStr));
+      
+      await reliableSender.sendWithRetry(peer.ip, peer.tcpPort || PORT_TCP, keyPacket);
     }
 
     // Broadcast updated state to all members
@@ -81,13 +105,24 @@ export class RoomCoordinator extends EventEmitter {
 
   private broadcastToMembers(room: Room, packet: AnyPacket & { messageId: string }, excludePeerIds: string[] = []) {
     const myUsername = settingsManager.getIdentity().username;
+    const { cryptoManager } = require('../security/cryptoManager');
     
     for (const member of room.members) {
       if (member.peerId === myUsername || excludePeerIds.includes(member.peerId)) continue;
 
       const peer = peerManager.getPeer(member.ip);
       if (peer) {
-        reliableSender.sendWithRetry(peer.ip, peer.tcpPort || PORT_TCP, packet).catch(console.error);
+        try {
+          let securePacket = packet;
+          if (packet.type === 'ROOM_MESSAGE' || packet.type === 'ROOM_STATE_SYNC') {
+            securePacket = cryptoManager.secureRoomWrap(packet, room.id);
+          } else {
+            securePacket = cryptoManager.secureWrap(packet, peer.username);
+          }
+          reliableSender.sendWithRetry(peer.ip, peer.tcpPort || PORT_TCP, securePacket).catch(console.error);
+        } catch (e) {
+          console.error('Failed to securely wrap and send packet to', peer.username, e);
+        }
       }
     }
   }

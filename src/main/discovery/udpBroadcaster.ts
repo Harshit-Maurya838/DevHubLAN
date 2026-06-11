@@ -1,5 +1,4 @@
 import dgram from 'dgram';
-import { DiscoveryPacket } from '../../shared/types';
 import { PORT_UDP, PORT_TCP, DISCOVERY_INTERVAL_MS } from '../../shared/constants';
 import { settingsManager } from '../storage/settings';
 
@@ -26,13 +25,24 @@ export class UdpBroadcaster {
 
   private broadcast() {
     const identity = settingsManager.getIdentity();
-    const packet: DiscoveryPacket = {
+    const { identityManager } = require('../security/identityManager');
+
+    const basePacket = {
       type: 'DISCOVER',
       username: identity.username,
       deviceName: identity.deviceName,
       ip: '0.0.0.0', // Not used strictly, the receiver gets ip from remoteInfo
       tcpPort: PORT_TCP,
       timestamp: Date.now()
+    };
+
+    const signatureStr = `${basePacket.type}${basePacket.username}${basePacket.timestamp}`;
+    const signature = identityManager.sign(Buffer.from(signatureStr));
+
+    const packet = {
+      ...basePacket,
+      publicKey: identityManager.getPublicKey(),
+      signature
     };
 
     this.sendPacket(packet);
@@ -44,13 +54,22 @@ export class UdpBroadcaster {
     
     for (const room of rooms) {
       if (room.ownerId === identity.username) {
-        const roomPacket = {
+        const roomBase = {
           type: 'ROOM_ADVERTISEMENT',
           roomId: room.id,
           roomName: room.name,
           owner: room.ownerId,
           memberCount: room.members.length,
           timestamp: Date.now()
+        };
+
+        const roomSigStr = `${roomBase.type}${roomBase.roomId}${roomBase.timestamp}`;
+        const roomSignature = identityManager.sign(Buffer.from(roomSigStr));
+
+        const roomPacket = {
+          ...roomBase,
+          publicKey: identityManager.getPublicKey(),
+          signature: roomSignature
         };
         this.sendPacket(roomPacket);
       }
